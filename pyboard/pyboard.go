@@ -9,14 +9,16 @@ import (
 
 // Pyboard is a struct that represents a pyboard.
 type Pyboard struct {
-	Port   string
-	Serial serial.Port
+	Port      string
+	Serial    serial.Port
+	inRawMode bool
 }
 
 // NewPyboard creates a new Pyboard.
 func NewPyboard(port string) *Pyboard {
 	board := &Pyboard{
-		Port: port,
+		Port:      port,
+		inRawMode: false,
 	}
 
 	// connect to the pyboard
@@ -39,6 +41,10 @@ func NewPyboard(port string) *Pyboard {
 	return board
 }
 
+func (p *Pyboard) Close() {
+	p.Serial.Close()
+}
+
 // blocks untill it reads the prompt value from the serial port
 func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 	// read from the pyboard until the prompt is found
@@ -50,22 +56,24 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 		maxLength = args[0]
 	}
 
-	timeout := 10
+	timeout := 10 // default timeout is 10 seconds
 	// the 2nd argument is the timeout
 	if len(args) > 1 {
 		timeout = args[1]
 	}
 
+	defer func() {
+		p.Serial.SetReadTimeout(serial.NoTimeout) // reset the timeout
+	}()
+
 	start := time.Now()
 	for {
-
-		println("Reading from the pyboard")
 
 		if time.Since(start).Seconds() > float64(timeout) {
 			return buffer.String(), false
 		}
 
-		tmpBuffer := make([]byte, 1024)
+		tmpBuffer := make([]byte, 1)
 		remaining := time.Duration(timeout)*time.Second - time.Since(start)
 		p.Serial.SetReadTimeout(remaining)
 
@@ -81,7 +89,8 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 				if maxLength == -1 {
 					return buffer.String(), true
 				} else if buffer.Len() >= maxLength {
-					return string(buffer.Bytes()[:maxLength+1]), true
+					start := buffer.Len() - maxLength
+					return string(buffer.Bytes()[start:]), true
 				}
 			}
 		}
@@ -89,6 +98,11 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 }
 
 func (p *Pyboard) EnterRawREPL() bool {
+
+	if p.inRawMode {
+		println("Already in raw repl")
+		return true
+	}
 
 	// send ctrl-c to stop the running program
 	p.Serial.Write([]byte{0x03})
@@ -108,11 +122,17 @@ func (p *Pyboard) EnterRawREPL() bool {
 	}
 
 	println("Entered raw repl")
+	p.inRawMode = true
 	return true
 
 }
 
 func (p *Pyboard) ExitRawREPL() bool {
+
+	if !p.inRawMode {
+		println("Not in raw repl")
+		return true
+	}
 
 	// send ctrl-b to exit raw repl
 	p.Serial.Write([]byte{0x02})
@@ -125,4 +145,25 @@ func (p *Pyboard) ExitRawREPL() bool {
 	println("Exited raw repl")
 	return true
 
+}
+
+func (p *Pyboard) Exec(code string) string {
+
+	p.EnterRawREPL()
+
+	p.Serial.Write([]byte(code))
+
+	// write ctrl-D to end the raw repl
+	p.Serial.Write([]byte{0x04})
+
+	// read the output
+	if _, succ := p.ReadUntil("OK", 2); !succ {
+		println("Error executing the code")
+	}
+
+	out, _ := p.ReadUntil(">", -1, 3)
+
+	p.ExitRawREPL()
+
+	return out[:len(out)-4]
 }
