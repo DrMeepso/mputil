@@ -1,6 +1,5 @@
 package main
 
-// import serial
 import (
 	"mputils/pyboard"
 )

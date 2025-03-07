@@ -83,9 +83,22 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 		}
 
 		// loop through the tmpBuffer and append to the buffer, until the prompt is found
-		for i := 0; i < n; i++ {
-			buffer.WriteByte(tmpBuffer[i])
-			if bytes.Contains(buffer.Bytes(), []byte(prompt)) {
+		if prompt != "" {
+			for i := 0; i < n; i++ {
+				buffer.WriteByte(tmpBuffer[i])
+				if bytes.Contains(buffer.Bytes(), []byte(prompt)) {
+					if maxLength == -1 {
+						return buffer.String(), true
+					} else if buffer.Len() >= maxLength {
+						start := buffer.Len() - maxLength
+						return string(buffer.Bytes()[start:]), true
+					}
+				}
+			}
+		} else {
+			buffer.Write(tmpBuffer)
+			// if n == 0, it means that the buffer is empty
+			if n == 0 {
 				if maxLength == -1 {
 					return buffer.String(), true
 				} else if buffer.Len() >= maxLength {
@@ -161,7 +174,7 @@ func (p *Pyboard) Exec(code string) string {
 		println("Error executing the code")
 	}
 
-	out, _ := p.ReadUntil(">", -1, 3)
+	out, _ := p.ReadUntil("", -1, 3)
 
 	p.ExitRawREPL()
 
