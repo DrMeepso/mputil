@@ -172,7 +172,7 @@ func (p *Pyboard) ExitRawREPL() bool {
 
 }
 
-func (p *Pyboard) Exec(code string) string {
+func (p *Pyboard) Exec(code string) (string, bool) {
 
 	p.EnterRawREPL()
 
@@ -188,8 +188,14 @@ func (p *Pyboard) Exec(code string) string {
 
 	out, _ := p.ReadUntil("", -1, 3)
 
+	endRemove := 6
+	if out[0] == 0x04 {
+		out = out[1:]
+		endRemove = 5
+	}
+
 	p.ExitRawREPL()
 
-	outValue := out[:len(out)-6] // remove the "OK\r\n" at the end
-	return outValue
+	outValue := out[:len(out)-endRemove] // remove the "OK\r\n" at the end
+	return outValue, endRemove != 6
 }

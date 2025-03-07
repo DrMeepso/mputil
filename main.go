@@ -8,6 +8,10 @@ func main() {
 
 	board := pyboard.NewPyboard("COM6")
 
-	println(board.FS.ReadFile("word_clock.py"))
+	test, err := board.Exec("print(\"Hello world\")")
+	// print the first char as a byte
+	println(test, err)
+
+	//println(board.FS.ReadFile("word_clock.py"))
 
 }

@@ -17,7 +17,7 @@ func NewPyFileSystem() *PyFileSystem {
 }
 
 func (fs *PyFileSystem) ListDir() []string {
-	files := fs.pyboard.Exec("import os; print(','.join(os.listdir()))")
+	files, _ := fs.pyboard.Exec("import os; print(','.join(os.listdir()))")
 	return strings.Split(files, ",")
 }
 
@@ -38,7 +38,9 @@ func (fs *PyFileSystem) readFileChunked(filename string, chunkSize int) string {
 	python += "        fileData += data\n\r"
 	python += "print(str(fileData, 'utf-8'))\n\r"
 
-	return fs.pyboard.Exec(python)
+	fileContent, _ := fs.pyboard.Exec(python)
+
+	return fileContent
 }
 
 func (fs *PyFileSystem) ReadFile(filename string) string {
