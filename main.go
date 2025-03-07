@@ -8,6 +8,6 @@ func main() {
 
 	board := pyboard.NewPyboard("COM6")
 
-	println("\"" + board.Exec("print('Hello World')") + "\"")
+	println(board.FS.ReadFile("word_clock.py"))
 
 }

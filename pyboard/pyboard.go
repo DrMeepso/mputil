@@ -12,6 +12,7 @@ type Pyboard struct {
 	Port      string
 	Serial    serial.Port
 	inRawMode bool
+	FS        *PyFileSystem
 }
 
 // NewPyboard creates a new Pyboard.
@@ -19,9 +20,9 @@ func NewPyboard(port string) *Pyboard {
 	board := &Pyboard{
 		Port:      port,
 		inRawMode: false,
+		FS:        NewPyFileSystem(),
 	}
-
-	// connect to the pyboard
+	board.FS.pyboard = board // set the pyboard for the filesystem
 
 	// rp2350's connection details
 	serial, err := serial.Open(port, &serial.Mode{
@@ -45,7 +46,17 @@ func (p *Pyboard) Close() {
 	p.Serial.Close()
 }
 
-// blocks untill it reads the prompt value from the serial port
+// ReadUntil reads from the pyboard's serial connection until a specified prompt is found or timeout occurs.
+// It takes a prompt string and optional arguments for max length and timeout duration.
+//
+// Parameters:
+//   - prompt: The string to search for in the incoming data. If empty, reads until buffer is empty
+//   - args[0] (optional): Maximum length of returned string. If -1 or not provided, no length limit
+//   - args[1] (optional): Timeout in seconds. Default is 10 seconds
+//
+// Returns:
+//   - string: The data read from the serial connection
+//   - bool: True if prompt was found or max length reached, false if timeout occurred
 func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 	// read from the pyboard until the prompt is found
 	var buffer bytes.Buffer
@@ -73,10 +84,10 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 			return buffer.String(), false
 		}
 
-		tmpBuffer := make([]byte, 1)
 		remaining := time.Duration(timeout)*time.Second - time.Since(start)
 		p.Serial.SetReadTimeout(remaining)
 
+		tmpBuffer := make([]byte, 1)
 		n, err := p.Serial.Read(tmpBuffer)
 		if err != nil {
 			panic(err)
