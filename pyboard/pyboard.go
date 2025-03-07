@@ -134,7 +134,7 @@ func (p *Pyboard) EnterRawREPL() bool {
 		return false
 	}
 
-	println("Entered raw repl")
+	//println("Entered raw repl")
 	p.inRawMode = true
 	return true
 
@@ -155,7 +155,8 @@ func (p *Pyboard) ExitRawREPL() bool {
 		return false
 	}
 
-	println("Exited raw repl")
+	//println("Exited raw repl")
+	p.inRawMode = false
 	return true
 
 }
@@ -178,5 +179,6 @@ func (p *Pyboard) Exec(code string) string {
 
 	p.ExitRawREPL()
 
-	return out[:len(out)-4]
+	outValue := out[:len(out)-6] // remove the "OK\r\n" at the end
+	return outValue
 }
