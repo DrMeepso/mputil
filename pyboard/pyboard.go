@@ -196,6 +196,10 @@ func (p *Pyboard) Exec(code string) (string, bool) {
 
 	p.ExitRawREPL()
 
-	outValue := out[:len(out)-endRemove] // remove the "OK\r\n" at the end
+	var outValue string
+	if len(out) > endRemove {
+		outValue = out[:len(out)-endRemove] // remove the "OK\r\n" at the end
+	}
+
 	return outValue, endRemove != 6
 }

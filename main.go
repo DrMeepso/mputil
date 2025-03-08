@@ -14,12 +14,13 @@ func main() {
 		println(port)
 	}
 
-	board := pyboard.NewPyboard("COM7")
+	board := pyboard.NewPyboard("COM6")
 
-	test, err := board.Exec("print(\"Hello world\")")
-	// print the first char as a byte
-	println(test, err)
+	// write hello.txt to the pyboard
+	board.FS.WriteFile("hello.txt", "Hello, world!")
 
-	//println(board.FS.ReadFile("word_clock.py"))
+	println(board.FS.ReadFile("hello.txt"))
+
+	println(board.FS.GetSHA256("hello.txt"))
 
 }
