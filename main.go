@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"mputil/pyboard"
+	"mputil/tools"
 	"os"
 	"strings"
 
@@ -10,25 +10,6 @@ import (
 )
 
 func main() {
-
-	// list available ports
-	/*
-		allPosts, _ := serial.GetPortsList()
-		for _, port := range allPosts {
-			println(port)
-		}
-	*/
-
-	/*
-		board := pyboard.NewPyboard("COM6")
-
-		// write hello.txt to the pyboard
-		board.FS.WriteFile("hello.txt", "Hello, world!")
-
-		println(board.FS.ReadFile("hello.txt"))
-
-		println(board.FS.GetSHA256("hello.txt"))
-	*/
 
 	// get cli arguments
 	args := os.Args[1:]
@@ -63,33 +44,28 @@ func main() {
 		ListDevices()
 
 	case "exec":
-		if selectedBoard == nil {
-			println("No device selected")
-			return
-		}
-		// prompt the user for python code
-		reader := bufio.NewReader(os.Stdin)
-		println("Enter the code to eval:")
-		print("> ")
-		code, _ := reader.ReadString('\n')
-		resp, err := selectedBoard.Exec(code)
-		if err {
-			println("Error executing python code")
-			println(resp)
-		} else {
-			println(resp)
-		}
+		tools.Tool_Exec(args, selectedBoard)
 		return
+
+	case "repl":
+		tools.Tool_Repl(args, selectedBoard)
+		return
+
+	default:
+		println("Unknown command")
+		Usage()
+
 	}
 
 }
 
 func Usage() {
+
 	split := strings.Split(os.Args[0], "\\")
 	exeName := split[len(split)-1]
 
 	println("Usage:")
-	println("  " + exeName + " [options]")
+	println("  " + exeName + " [options] <command>")
 	println("")
 	println("Options:")
 	println("  -d, --device <comport>  Specify the device comport")
@@ -97,8 +73,8 @@ func Usage() {
 	println("Tools:")
 	println("  list                    List available comports")
 	println("  dump <local folder>     Dump the pyboard filesystem to the local folder")
-	println("  sync <local folder>     Sync the local folder to the pyboard filesystem")
-	println("  exec					   Execute python code on the pyboard")
+	println("  sync <local folder>     Sync the local folder to the pyboard")
+	println("  exec                    Execute python code on the pyboard")
 	println("  repl                    Start a python repl on the pyboard")
 
 }
