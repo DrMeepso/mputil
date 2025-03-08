@@ -2,17 +2,17 @@ package main
 
 import (
 	"mputil/pyboard"
-
-	"go.bug.st/serial"
 )
 
 func main() {
 
 	// list available ports
-	allPosts, _ := serial.GetPortsList()
-	for _, port := range allPosts {
-		println(port)
-	}
+	/*
+		allPosts, _ := serial.GetPortsList()
+		for _, port := range allPosts {
+			println(port)
+		}
+	*/
 
 	board := pyboard.NewPyboard("COM6")
 

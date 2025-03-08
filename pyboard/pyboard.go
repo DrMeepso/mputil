@@ -174,19 +174,27 @@ func (p *Pyboard) ExitRawREPL() bool {
 
 func (p *Pyboard) Exec(code string) (string, bool) {
 
+	//println("Entering raw repl")
 	p.EnterRawREPL()
+	//println("Entered raw repl")
 
 	p.Serial.Write([]byte(code))
 
 	// write ctrl-D to end the raw repl
 	p.Serial.Write([]byte{0x04})
 
+	//println("Sent the code")
+
 	// read the output
 	if _, succ := p.ReadUntil("OK", 2); !succ {
 		println("Error executing the code")
 	}
 
+	//println("Command has run")
+
 	out, _ := p.ReadUntil("", -1, 3)
+
+	//println("Output received")
 
 	endRemove := 6
 	if out[0] == 0x04 {
@@ -195,6 +203,8 @@ func (p *Pyboard) Exec(code string) (string, bool) {
 	}
 
 	p.ExitRawREPL()
+
+	//println("Exited raw repl")
 
 	var outValue string
 	if len(out) > endRemove {
