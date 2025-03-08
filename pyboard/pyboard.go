@@ -84,8 +84,8 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 			return buffer.String(), false
 		}
 
-		remaining := time.Duration(timeout)*time.Second - time.Since(start)
-		p.Serial.SetReadTimeout(remaining)
+		//remaining := time.Duration(timeout)*time.Second - time.Since(start)
+		p.Serial.SetReadTimeout(50 * time.Millisecond)
 
 		tmpBuffer := make([]byte, 1)
 		n, err := p.Serial.Read(tmpBuffer)
