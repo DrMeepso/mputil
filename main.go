@@ -40,7 +40,7 @@ func main() {
 		defer selectedBoard.Close()
 	}
 
-	switch command {
+	switch strings.ToLower(command) {
 
 	case "list":
 		ListDevices()

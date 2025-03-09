@@ -66,7 +66,7 @@ print(fileHex)
 }
 
 func (fs *PyFileSystem) ReadFile(filename string) string {
-	return fs.readFileChunked(filename, 256)
+	return fs.readFileChunked(filename, 512)
 }
 
 // write the file in mutiple chunks
