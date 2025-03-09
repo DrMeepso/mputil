@@ -57,6 +57,10 @@ func main() {
 		tools.Tool_Dump(os.Args[ArgStartIndex:], selectedBoard)
 		return
 
+	case "sync":
+		tools.Tool_Sync(os.Args[ArgStartIndex:], selectedBoard)
+		return
+
 	default:
 		println("Unknown command")
 		Usage()

@@ -44,7 +44,7 @@ with open("` + filename + `", 'rb') as f:
 		if not data:
 			break
 		fileHex += binascii.hexlify(data).decode('utf-8')
-print(fileHex)
+print(fileHex + "#")
 `
 
 	fileContent, Rerr := fs.pyboard.Exec(python)
@@ -55,7 +55,7 @@ print(fileHex)
 	}
 
 	// decode the hex string
-	proper, err := hex.DecodeString(fileContent)
+	proper, err := hex.DecodeString(fileContent[:len(fileContent)-1]) // remove the last #
 	if err != nil {
 		println(err.Error())
 		return ""
@@ -65,7 +65,7 @@ print(fileHex)
 }
 
 func (fs *PyFileSystem) ReadFile(filename string) string {
-	return fs.readFileChunked(filename, 512)
+	return fs.readFileChunked(filename, 1024)
 }
 
 // write the file in mutiple chunks
