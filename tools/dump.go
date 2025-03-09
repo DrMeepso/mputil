@@ -29,6 +29,7 @@ func Tool_Dump(args []string, board *pyboard.Pyboard) {
 	}
 	if len(entries) > 0 {
 		println("Folder is not empty, would you like to wipe it? (y/n)")
+		print("> ")
 		var response string
 		_, err := fmt.Scanln(&response)
 		if err != nil {
@@ -48,11 +49,19 @@ func Tool_Dump(args []string, board *pyboard.Pyboard) {
 		}
 	}
 
+	println("Dumping files from the pyboard to", folder)
+
 	// get the list of files
 	files := board.FS.ListDir()
-	println(files)
+	longestName := 0
 	for _, file := range files {
-		println("Dumping", file)
+		if len(file) > longestName {
+			longestName = len(file)
+		}
+	}
+
+	for i, file := range files {
+		println("Dumping", padString(file, longestName+2), fmt.Sprint(i+1)+"/"+fmt.Sprint(len(files)))
 		content := board.FS.ReadFile(file)
 		filePath := folder + "/" + file
 		err := os.WriteFile(filePath, []byte(content), os.ModePerm)
@@ -61,6 +70,13 @@ func Tool_Dump(args []string, board *pyboard.Pyboard) {
 		}
 	}
 
-	println("Done")
+	println("Dumped", len(files), "files to", folder)
+}
 
+func padString(input string, length int) string {
+	if len(input) >= length {
+		return input
+	}
+	padding := length - len(input)
+	return input + fmt.Sprintf("%*s", padding, "")
 }

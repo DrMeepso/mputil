@@ -23,7 +23,6 @@ func (fs *PyFileSystem) ListDir() []string {
 	if err {
 		return []string{}
 	}
-	println(files)
 	return strings.Split(files, ",")
 }
 
