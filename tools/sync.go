@@ -71,7 +71,7 @@ func Tool_Sync(args []string, board *pyboard.Pyboard) {
 		}
 
 		// get a sha256 hash of the file in the src folder
-		hashSrc, err := getFileSHA256(src + "/" + file)
+		hashSrc, err := GetFileSHA256(src + "/" + file)
 		if err != nil {
 			continue
 		}
@@ -113,8 +113,8 @@ func Tool_Sync(args []string, board *pyboard.Pyboard) {
 	if unsureFiles > 0 {
 		println("^-- Out of sync files --^")
 		println("You have some file out of sync with the pyboard")
-		println("1 > Sync files from the pyboard")
-		println("2 > Upload changed, missing or extra files?")
+		println("1 > Sync files from the pyboard (Download all files and overwrite local files)")
+		println("2 > Upload changed, missing or extra files (Upload all files and overwrite pyboard files)")
 		println("3 > Cancel")
 		print("> ")
 		var response string
@@ -159,14 +159,18 @@ func Tool_Sync(args []string, board *pyboard.Pyboard) {
 		case "3":
 			println("Aborted")
 			return
+
+		default:
+			println("Unknown option")
+			return
 		}
 	}
 
-	println("Sync has begun")
+	println("Files are in sync")
 
 }
 
-func getFileSHA256(filename string) (string, error) {
+func GetFileSHA256(filename string) (string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return "", err
