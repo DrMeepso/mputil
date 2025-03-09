@@ -54,7 +54,7 @@ func main() {
 		return
 
 	case "dump":
-		tools.Tool_Dump(os.Args[ArgStartIndex:], selectedBoard)
+		tools.Tool_Dump(os.Args[ArgStartIndex:], selectedBoard, false)
 		return
 
 	case "sync":

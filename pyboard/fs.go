@@ -2,7 +2,6 @@ package pyboard
 
 import (
 	"encoding/hex"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -68,42 +67,46 @@ func (fs *PyFileSystem) ReadFile(filename string) string {
 	return fs.readFileChunked(filename, 1024)
 }
 
+func writeChunk(filename string, chunk string, fileSystem PyFileSystem) bool {
+
+	hexChunk := hex.EncodeToString([]byte(chunk))
+
+	python := "import os\n\r"
+	python += "import binascii\n\r"
+	python += "with open('" + filename + "', 'ab') as f:\n\r"
+	python += "    f.write(binascii.unhexlify('" + hexChunk + "'))\n\r"
+	ret, err := fileSystem.pyboard.Exec(python)
+	println(ret)
+	if err {
+		return false
+	}
+	return true
+}
+
 // write the file in mutiple chunks
 func (fs *PyFileSystem) writeFileChunked(filename string, data string, chunkSize int) bool {
 	fileData := []byte(data)
 	chunkCount := len(fileData) / chunkSize
 
+	// clear the file
+	fs.pyboard.Exec("open('" + filename + "', 'w').close()")
+
 	for i := 0; i < chunkCount; i++ {
 		chunk := fileData[i*chunkSize : (i+1)*chunkSize]
-		python := "import os\n\r"
-		python += "with open('" + filename + "', 'wb') as f:\n\r"
-		python += "    f.write(" + fmt.Sprintf("%q", chunk) + ")\n\r"
-		ret, err := fs.pyboard.Exec(python)
-		println(ret)
-		if err {
-			return false
-		}
+		writeChunk(filename, string(chunk), *fs)
 	}
 
 	// write the last chunk
 	if len(fileData)%chunkSize != 0 {
 		chunk := fileData[chunkCount*chunkSize:]
-		python := "import os\n\r"
-		python += "with open('" + filename + "', 'wb') as f:\n\r"
-		python += "    f.write(" + fmt.Sprintf("%q", chunk) + ")\n\r"
-		fs.pyboard.Exec(python)
-		ret, err := fs.pyboard.Exec(python)
-		println(ret)
-		if err {
-			return false
-		}
+		writeChunk(filename, string(chunk), *fs)
 	}
 
 	return true
 }
 
 func (fs *PyFileSystem) WriteFile(filename string, data string) bool {
-	return fs.writeFileChunked(filename, data, 256)
+	return fs.writeFileChunked(filename, data, 1024)
 }
 
 func (fs *PyFileSystem) RemoveFile(filename string) {

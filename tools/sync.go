@@ -52,6 +52,8 @@ func Tool_Sync(args []string, board *pyboard.Pyboard) {
 		allFiles[file.Name()] = FileExtra
 	}
 
+	println("Checking files...")
+
 	// get the list of files
 	files := board.FS.ListDir()
 	for _, file := range files {
@@ -84,7 +86,7 @@ func Tool_Sync(args []string, board *pyboard.Pyboard) {
 
 	// print the results
 	unsureFiles := int(0)
-	wrongFiles := (make([]string, 0))[0:0]
+	wrongFiles := (make(map[string]int))
 	for file, status := range allFiles {
 		switch status {
 		case FileHashChange:
@@ -92,19 +94,19 @@ func Tool_Sync(args []string, board *pyboard.Pyboard) {
 			println("Changed >", file)
 			print(CONSOLE_Reset)
 			unsureFiles++
-			wrongFiles = append(wrongFiles, file)
+			wrongFiles[file] = FileHashChange
 		case FileMissing:
 			print(CONSOLE_Red)
 			println("Missing >", file)
 			print(CONSOLE_Reset)
 			unsureFiles++
-			wrongFiles = append(wrongFiles, file)
+			wrongFiles[file] = FileMissing
 		case FileExtra:
 			print(CONSOLE_Blue)
 			println("Extra >", file)
 			print(CONSOLE_Reset)
 			unsureFiles++
-			wrongFiles = append(wrongFiles, file)
+			wrongFiles[file] = FileExtra
 		}
 	}
 
@@ -124,18 +126,33 @@ func Tool_Sync(args []string, board *pyboard.Pyboard) {
 		switch response {
 		case "1":
 			// sync files from the pyboard
-			Tool_Dump([]string{"dump", src}, board)
+			Tool_Dump([]string{"dump", src}, board, true)
 			println("Files synced")
 		case "2":
 			// upload changed, missing or extra files
-			for _, file := range wrongFiles {
-				println("Uploading", file)
-				data, err := os.ReadFile(src + "/" + file)
-				if err != nil {
-					println("Error reading file", file)
-					continue
+			for fileName, file := range wrongFiles {
+				switch file {
+				case FileHashChange:
+					println("Uploading changed file", fileName)
+					localContent, err := os.ReadFile(src + "/" + fileName)
+					if err != nil {
+						println("Error reading file", fileName)
+						continue
+					}
+					board.FS.WriteFile(fileName, string(localContent))
+				case FileMissing:
+					// delete the file from the pyboard
+					println("Deleting missing file", fileName)
+					board.FS.RemoveFile(fileName)
+				case FileExtra:
+					println("Uploading extra file", fileName)
+					localContent, err := os.ReadFile(src + "/" + fileName)
+					if err != nil {
+						println("Error reading file", fileName)
+						continue
+					}
+					board.FS.WriteFile(fileName, string(localContent))
 				}
-				board.FS.WriteFile(file, string(data))
 			}
 			println("Files uploaded")
 

@@ -7,7 +7,7 @@ import (
 )
 
 // dump all files from the pyboard to a folder (src)
-func Tool_Dump(args []string, board *pyboard.Pyboard) {
+func Tool_Dump(args []string, board *pyboard.Pyboard, skipPrompt bool) {
 	if len(args) != 2 {
 		println("Usage: dump <folder>")
 		return
@@ -27,7 +27,7 @@ func Tool_Dump(args []string, board *pyboard.Pyboard) {
 		println("Error reading folder")
 		return
 	}
-	if len(entries) > 0 {
+	if len(entries) > 0 && !skipPrompt {
 		println("Folder is not empty, would you like to wipe it? (y/n)")
 		print("> ")
 		var response string

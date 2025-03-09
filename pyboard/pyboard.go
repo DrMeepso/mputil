@@ -86,9 +86,9 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 		}
 
 		//remaining := time.Duration(timeout)*time.Second - time.Since(start)
-		p.Serial.SetReadTimeout(10 * time.Millisecond)
+		p.Serial.SetReadTimeout(25 * time.Millisecond)
 
-		tmpBuffer := make([]byte, 1)
+		tmpBuffer := make([]byte, 256)
 		n, err := p.Serial.Read(tmpBuffer)
 		if err != nil {
 			panic(err)
@@ -109,7 +109,9 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 			}
 		} else {
 			if n > 0 {
-				buffer.Write(tmpBuffer)
+				for i := 0; i < n; i++ {
+					buffer.WriteByte(tmpBuffer[i])
+				}
 			}
 			if n == 0 && buffer.Len() > 0 {
 				if maxLength == -1 {
@@ -205,6 +207,8 @@ func (p *Pyboard) Exec(code string) (string, bool) {
 	if len(out) > endRemove {
 		outValue = strings.TrimSpace(out[:len(out)-endRemove])
 	}
+
+	//println("\"" + outValue + "\"")
 
 	return outValue, endRemove != 3
 }
