@@ -1,6 +1,7 @@
 package pyboard
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -18,7 +19,10 @@ func NewPyFileSystem() *PyFileSystem {
 }
 
 func (fs *PyFileSystem) ListDir() []string {
-	files, _ := fs.pyboard.Exec("import os; print(','.join(os.listdir()))")
+	files, err := fs.pyboard.Exec("import os; print(','.join(os.listdir()))")
+	if err {
+		return []string{}
+	}
 	return strings.Split(files, ",")
 }
 
@@ -29,19 +33,28 @@ func (fs *PyFileSystem) ChangeDir(dir string) {
 
 // read the file in mutiple chunks
 func (fs *PyFileSystem) readFileChunked(filename string, chunkSize int) string {
-	python := "import os\n\r"
-	python += "fileData = b''\n\r"
-	python += "with open('" + filename + "', 'rb') as f:\n\r"
-	python += "    while True:\n\r"
-	python += "        data = f.read(" + fmt.Sprint(chunkSize) + ")\n\r"
-	python += "        if not data:\n\r"
-	python += "            break\n\r"
-	python += "        fileData += data\n\r"
-	python += "print(str(fileData, 'utf-8'))\n\r"
+	python := `import os
+import binascii
+
+fileHex = ""
+with open("` + filename + `", 'rb') as f:
+	while True:
+		data = f.read( ` + strconv.Itoa(chunkSize) + ` )
+		if not data:
+			break
+		fileHex += binascii.hexlify(data).decode('utf-8')
+print(fileHex)
+`
 
 	fileContent, _ := fs.pyboard.Exec(python)
+	// decode the hex string
+	proper, err := hex.DecodeString(fileContent[:len(fileContent)-1])
+	if err != nil {
+		println(err.Error())
+		return ""
+	}
 
-	return fileContent
+	return string(proper)
 }
 
 func (fs *PyFileSystem) ReadFile(filename string) string {

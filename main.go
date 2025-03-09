@@ -21,13 +21,15 @@ func main() {
 	// parse arguments, look for -args then command
 	var device string
 	var command string
+	var ArgStartIndex int
 
 	for i := 0; i < len(args); i++ {
-		if args[i] == "-d" || args[i] == "--device" {
+		if strings.ToLower(args[i]) == "-d" || strings.ToLower(args[i]) == "--device" {
 			device = args[i+1]
 			i++
 		} else {
 			command = args[i]
+			ArgStartIndex = i + 1
 			break
 		}
 	}
@@ -44,11 +46,15 @@ func main() {
 		ListDevices()
 
 	case "exec":
-		tools.Tool_Exec(args, selectedBoard)
+		tools.Tool_Exec(os.Args[ArgStartIndex:], selectedBoard)
 		return
 
 	case "repl":
-		tools.Tool_Repl(args, selectedBoard)
+		tools.Tool_Repl(os.Args[ArgStartIndex:], selectedBoard)
+		return
+
+	case "dump":
+		tools.Tool_Dump(os.Args[ArgStartIndex:], selectedBoard)
 		return
 
 	default:

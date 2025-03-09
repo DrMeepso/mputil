@@ -13,13 +13,10 @@ func Tool_Repl(args []string, board *pyboard.Pyboard) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	buff := make([]byte, 128)
-	board.Serial.Read(buff)
-
 	// create a new go routine to handle the read the serial port
 	go func() {
 		for {
-			buff := make([]byte, 64)
+			buff := make([]byte, 256)
 			n, err := board.Serial.Read(buff)
 			if err != nil {
 				println("Error reading from serial port")

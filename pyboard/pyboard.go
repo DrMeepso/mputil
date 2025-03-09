@@ -85,7 +85,7 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 		}
 
 		//remaining := time.Duration(timeout)*time.Second - time.Since(start)
-		p.Serial.SetReadTimeout(1 * time.Millisecond)
+		p.Serial.SetReadTimeout(10 * time.Millisecond)
 
 		tmpBuffer := make([]byte, 1)
 		n, err := p.Serial.Read(tmpBuffer)
@@ -107,9 +107,10 @@ func (p *Pyboard) ReadUntil(prompt string, args ...int) (string, bool) {
 				}
 			}
 		} else {
-			buffer.Write(tmpBuffer)
-			// if n == 0, it means that the buffer is empty
-			if n == 0 {
+			if n > 0 {
+				buffer.Write(tmpBuffer)
+			}
+			if n == 0 && buffer.Len() > 0 {
 				if maxLength == -1 {
 					return buffer.String(), true
 				} else if buffer.Len() >= maxLength {
@@ -130,6 +131,9 @@ func (p *Pyboard) EnterRawREPL() bool {
 
 	// send ctrl-c to stop the running program
 	p.Serial.Write([]byte{0x03})
+
+	// send ctrl-b incase we are already in raw repl
+	p.Serial.Write([]byte{0x02})
 
 	// read the output
 	if _, found := p.ReadUntil(">>>", 3, 3); !found {
@@ -186,7 +190,7 @@ func (p *Pyboard) Exec(code string) (string, bool) {
 		println("Error executing the code")
 	}
 
-	out, _ := p.ReadUntil("", -1, 3)
+	out, _ := p.ReadUntil("", -1, 3, 1)
 
 	endRemove := 6
 	if out[0] == 0x04 {
