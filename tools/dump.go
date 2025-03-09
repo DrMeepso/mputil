@@ -50,6 +50,7 @@ func Tool_Dump(args []string, board *pyboard.Pyboard) {
 
 	// get the list of files
 	files := board.FS.ListDir()
+	println(files)
 	for _, file := range files {
 		println("Dumping", file)
 		content := board.FS.ReadFile(file)

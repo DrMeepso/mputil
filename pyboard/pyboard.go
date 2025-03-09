@@ -2,6 +2,7 @@ package pyboard
 
 import (
 	"bytes"
+	"strings"
 	"time"
 
 	"go.bug.st/serial"
@@ -192,18 +193,18 @@ func (p *Pyboard) Exec(code string) (string, bool) {
 
 	out, _ := p.ReadUntil("", -1, 3, 1)
 
-	endRemove := 6
+	endRemove := 3
 	if out[0] == 0x04 {
 		out = out[1:]
-		endRemove = 5
+		endRemove = 2
 	}
 
 	p.ExitRawREPL()
 
 	var outValue string
 	if len(out) > endRemove {
-		outValue = out[:len(out)-endRemove] // remove the "OK\r\n" at the end
+		outValue = strings.TrimSpace(out[:len(out)-endRemove])
 	}
 
-	return outValue, endRemove != 6
+	return outValue, endRemove != 3
 }

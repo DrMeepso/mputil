@@ -23,6 +23,7 @@ func (fs *PyFileSystem) ListDir() []string {
 	if err {
 		return []string{}
 	}
+	println(files)
 	return strings.Split(files, ",")
 }
 
@@ -33,7 +34,8 @@ func (fs *PyFileSystem) ChangeDir(dir string) {
 
 // read the file in mutiple chunks
 func (fs *PyFileSystem) readFileChunked(filename string, chunkSize int) string {
-	python := `import os
+	python := `
+import os
 import binascii
 
 fileHex = ""
@@ -46,9 +48,15 @@ with open("` + filename + `", 'rb') as f:
 print(fileHex)
 `
 
-	fileContent, _ := fs.pyboard.Exec(python)
+	fileContent, Rerr := fs.pyboard.Exec(python)
+	if Rerr {
+		println("Error reading file")
+		println(fileContent)
+		return ""
+	}
+
 	// decode the hex string
-	proper, err := hex.DecodeString(fileContent[:len(fileContent)-1])
+	proper, err := hex.DecodeString(fileContent)
 	if err != nil {
 		println(err.Error())
 		return ""
