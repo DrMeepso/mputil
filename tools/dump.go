@@ -60,8 +60,10 @@ func Tool_Dump(args []string, board *pyboard.Pyboard) {
 		}
 	}
 
+	padto := max(20, longestName+2)
+
 	for i, file := range files {
-		println("Dumping", padString(file, longestName+2), fmt.Sprint(i+1)+"/"+fmt.Sprint(len(files)))
+		println("Dumping", padString(file, padto), fmt.Sprint(i+1)+"/"+fmt.Sprint(len(files)))
 		content := board.FS.ReadFile(file)
 		filePath := folder + "/" + file
 		err := os.WriteFile(filePath, []byte(content), os.ModePerm)
